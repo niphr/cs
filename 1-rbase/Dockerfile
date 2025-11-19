@@ -287,7 +287,6 @@ RUN install2.r --error --skipinstalled -n 6 \
     csdata \
     csdb \
     csmaps \
-    csreport \
     cstidy \
     cstime \
     csutil
