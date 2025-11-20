@@ -2,6 +2,10 @@ FROM docker.io/ubuntu:jammy
 ARG R_VERSION=4.2.2
 ARG CRAN_CHECKPOINT_BINARY=https://packagemanager.rstudio.com/all/766976
 ARG CRAN_CHECKPOINT_SOURCE=https://packagemanager.rstudio.com/all/766976
+
+ARG AIRFLOW_UID=50000
+ARG AIRFLOW_GID=50000
+
 MAINTAINER "Richard Aubrey White" hello@rwhite.no
 
 ENV R_HOME="/opt/R/${R_VERSION}/lib/R"
@@ -111,6 +115,8 @@ RUN apt-get update -y && \
     zsh && \
     apt-get clean all && \
     rm -rf /var/lib/apt/lists/*
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 RUN curl -L -o /usr/local/bin/wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
     chmod +x /usr/local/bin/wait-for-it.sh
@@ -450,6 +456,7 @@ RUN install2.r --error --skipinstalled -n 6 \
     RODBC \
     R.oo \
     roxygen2 \
+    RPostgres \
     rsvg \
     rticles \
     R.utils
@@ -517,6 +524,24 @@ RUN R -e 'devtools::install_github("csids/cs9", upgrade="never")'
 RUN R -e 'devtools::install_github("epi-ai/swereg", upgrade="never")'
 
 ####################
+# Extra R packages #
+####################
+
+RUN R -e 'devtools::install_github("norsyss/norsyss", upgrade="never")'
+
+####################
+# CS9 #
+####################
+
+# Copy config and startup
+COPY content/install_ss_and_run_task.sh /usr/local/bin/install_ss_and_run_task.sh
+COPY content/install_ss_and_run_task_k8s.sh /usr/local/bin/install_ss_and_run_task_k8s.sh
+RUN chmod +x /usr/local/bin/install_ss_and_run_task.sh
+RUN chmod +x /usr/local/bin/install_ss_and_run_task_k8s.sh
+
+RUN R -e 'devtools::install_github("csids/cs9example", upgrade="never")'
+
+####################
 # Python libraries #
 ####################
 
@@ -554,6 +579,37 @@ RUN echo "[ default_conf ]" >> /etc/ssl/openssl.cnf && \
     echo "[ssl_default_sect]" >> /etc/ssl/openssl.cnf && \
     echo "MinProtocol = TLSv1.2" >> /etc/ssl/openssl.cnf && \
     echo "CipherString = DEFAULT:@SECLEVEL=0" >> /etc/ssl/openssl.cnf
+
+#####################
+# Airflow
+#####################
+
+# Create non-root 'airflow' user with UID 50000 and GID 50000
+# Required for Kubernetes Pod Security Standards compliance and principle of least privilege
+RUN groupadd -r -g ${AIRFLOW_GID} airflow && \
+    useradd -r -u ${AIRFLOW_UID} -g ${AIRFLOW_GID} -s /bin/bash -m airflow
+
+### install Airflow for Kubernetes execution (for Airflow 3.0+ compatibility)
+### Use official Airflow 3.1.0 constraints for known-good dependency versions
+RUN pip install --upgrade pip && \
+    pip install apache-airflow[kubernetes]==3.1.0 \
+      --constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.1.0/constraints-3.10.txt && \
+    find /usr/local/lib/python3.10/dist-packages -type d -exec chmod 755 {} \; && \
+    find /usr/local/lib/python3.10/dist-packages -type f -exec chmod 644 {} \;
+
+### Set AIRFLOW_HOME to /tmp/airflow for ephemeral worker pods
+### This allows any UID to import airflow without permission issues
+ENV AIRFLOW_HOME=/tmp/airflow
+
+# Ensure airflow user owns necessary directories and can write to them
+RUN mkdir -p /tmp/airflow && \
+    chown -R airflow:airflow /tmp/airflow && \
+    chmod -R 750 /tmp/airflow && \
+    chown -R airflow:airflow /opt/airflow 2>/dev/null || true && \
+    chmod -R 750 /opt/airflow 2>/dev/null || true
+
+# Switch to non-root airflow user for all subsequent operations
+USER airflow
 
 CMD ["R"]
 
