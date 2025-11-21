@@ -526,15 +526,15 @@ RUN R -e "install.packages('rstanarm')"
 RUN R -e "install.packages('INLA', repos=c(getOption('repos'), INLA='https://inla.r-inla-download.org/R/stable'), dep=FALSE)"
 RUN chmod +x /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl.run /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl
 
-RUN R -e 'devtools::install_github("csids/csstyle", upgrade="never", auth_token = "$GITHUB_PAT")'
-RUN R -e 'devtools::install_github("csids/cs9", upgrade="never", auth_token = "$GITHUB_PAT")'
-RUN R -e 'devtools::install_github("epi-ai/swereg", upgrade="never", auth_token = "$GITHUB_PAT")'
+RUN R -e "devtools::install_github(\"csids/csstyle\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN R -e "devtools::install_github(\"csids/cs9\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN R -e "devtools::install_github(\"papadopoulos-lab/swereg\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
 # Extra R packages #
 ####################
 
-RUN R -e 'devtools::install_github("norsyss/norsyss", upgrade="never", auth_token = "$GITHUB_PAT")'
+RUN R -e "devtools::install_github(\"norsyss/norsyss\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
 # CS9 #
@@ -546,7 +546,7 @@ COPY content/install_ss_and_run_task_k8s.sh /usr/local/bin/install_ss_and_run_ta
 RUN chmod +x /usr/local/bin/install_ss_and_run_task.sh
 RUN chmod +x /usr/local/bin/install_ss_and_run_task_k8s.sh
 
-RUN R -e 'devtools::install_github("csids/cs9example", upgrade="never", auth_token = "$GITHUB_PAT")'
+RUN R -e "devtools::install_github(\"csids/cs9example\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
 # Python libraries #
