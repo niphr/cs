@@ -8,6 +8,11 @@ ARG AIRFLOW_GID=50000
 
 MAINTAINER "Richard Aubrey White" hello@rwhite.no
 
+LABEL org.opencontainers.image.source=https://github.com/niphr/cs
+LABEL org.opencontainers.image.description="R base image with version $R_VERSION for CS9"
+LABEL org.opencontainers.image.licenses=MIT
+
+
 ENV R_HOME="/opt/R/${R_VERSION}/lib/R"
 ENV DEBIAN_FRONTEND=noninteractive
 

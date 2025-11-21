@@ -1,6 +1,12 @@
 ARG R_VERSION=R_VERSION
 FROM ghcr.io/niphr/cs/rbase:$R_VERSION
 
+MAINTAINER "Richard Aubrey White" hello@rwhite.no
+
+LABEL org.opencontainers.image.source=https://github.com/niphr/cs
+LABEL org.opencontainers.image.description="Posit Workbench with version $R_VERSION for CS9"
+LABEL org.opencontainers.image.licenses=MIT
+
 # Set default env values
 ENV DEBIAN_FRONTEND=noninteractive
 ENV RSP_LICENSE ""
