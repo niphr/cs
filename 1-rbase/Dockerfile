@@ -1,4 +1,5 @@
 FROM docker.io/ubuntu:jammy
+
 ARG R_VERSION=4.2.2
 ARG CRAN_CHECKPOINT_BINARY=https://packagemanager.rstudio.com/all/766976
 ARG CRAN_CHECKPOINT_SOURCE=https://packagemanager.rstudio.com/all/766976
