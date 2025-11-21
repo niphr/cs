@@ -6,6 +6,8 @@ ARG CRAN_CHECKPOINT_SOURCE=https://packagemanager.rstudio.com/all/766976
 ARG AIRFLOW_UID=50000
 ARG AIRFLOW_GID=50000
 
+ARG GITHUB_PAT=X
+
 LABEL org.opencontainers.image.authors="Richard Aubrey White <hello@rwhite.no>"
 LABEL org.opencontainers.image.source=https://github.com/niphr/cs
 LABEL org.opencontainers.image.description="R base image with version $R_VERSION for CS9"
