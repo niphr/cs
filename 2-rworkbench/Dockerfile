@@ -18,8 +18,7 @@ ENV RSP_TESTUSER_UID 10000
 ENV RSP_LAUNCHER true
 ENV RSP_LAUNCHER_TIMEOUT 10
 
-# Template surveillance system
-RUN git clone "https://github.com/csids/cs9example.git" "/cs9example"
+USER root
 
 # Copy config and startup
 COPY content/create_user.sh /usr/local/bin/create_user.sh

@@ -546,6 +546,7 @@ COPY content/install_ss_and_run_task_k8s.sh /usr/local/bin/install_ss_and_run_ta
 RUN chmod +x /usr/local/bin/install_ss_and_run_task.sh
 RUN chmod +x /usr/local/bin/install_ss_and_run_task_k8s.sh
 
+RUN git clone "https://github.com/csids/cs9example.git" "/cs9example"
 RUN R -e "devtools::install_github(\"csids/cs9example\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
