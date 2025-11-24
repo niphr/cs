@@ -598,10 +598,12 @@ RUN groupadd -r -g ${AIRFLOW_GID} airflow && \
     useradd -r -u ${AIRFLOW_UID} -g ${AIRFLOW_GID} -s /bin/bash -m airflow
 
 ### install Airflow for Kubernetes execution (for Airflow 3.0+ compatibility)
-### Use official Airflow 3.1.0 constraints for known-good dependency versions
+### Use official Airflow 3.1.1 constraints for known-good dependency versions
+### Must install CNCF provider explicitly (not included in [kubernetes] extra)
 RUN pip install --upgrade pip && \
-    pip install apache-airflow[kubernetes]==3.1.0 \
-      --constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.1.0/constraints-3.10.txt && \
+    pip install apache-airflow[kubernetes]==3.1.1 \
+      apache-airflow-providers-cncf-kubernetes==10.8.2 \
+      --constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.1.1/constraints-3.10.txt && \
     find /usr/local/lib/python3.10/dist-packages -type d -exec chmod 755 {} \; && \
     find /usr/local/lib/python3.10/dist-packages -type f -exec chmod 644 {} \;
 
