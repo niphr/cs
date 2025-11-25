@@ -225,11 +225,11 @@ RUN wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" | sh && \
     rm -rf /var/lib/apt/lists/*
 
 # tinytex needed packages
-RUN tlmgr repository list
-RUN tlmgr repository add https://ctan.uib.no/systems/texlive/tlnet
-RUN tlmgr option repository https://ctan.uib.no/systems/texlive/tlnet
-RUN tlmgr update --self
-RUN tlmgr install \
+RUN tlmgr repository list && \
+    tlmgr repository add https://ctan.uib.no/systems/texlive/tlnet && \
+    tlmgr option repository https://ctan.uib.no/systems/texlive/tlnet && \
+    tlmgr update --self && \
+    tlmgr install \
     algorithms \
     algorithmicx \
     babel-norsk \
@@ -274,22 +274,18 @@ RUN curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && gdebi 
 # R packages #
 ##############
 
-# Matrix
-RUN R -e "install.packages('Matrix')"
-
 RUN install2.r --error --skipinstalled -n 6 \
-    arm
-    
-RUN install2.r --error --skipinstalled -n 6 \
+    Matrix \
+    arm \
+    \
     bayestestR \
     bibtex \
     blastula \
     blogdown \
     bookdown \
     brew \
-    brms
-
-RUN install2.r --error --skipinstalled -n 6 \
+    brms \
+    \
     caret \
     ClustOfVar \
     corpcor \
@@ -302,9 +298,8 @@ RUN install2.r --error --skipinstalled -n 6 \
     csmaps \
     cstidy \
     cstime \
-    csutil
-
-RUN install2.r --error --skipinstalled -n 6 \
+    csutil \
+    \
     data.table \
     dbplyr \
     DescTools \
@@ -315,18 +310,16 @@ RUN install2.r --error --skipinstalled -n 6 \
     drat \
     drc \
     doFuture \
-    doSNOW
-
-RUN install2.r --error --skipinstalled -n 6 \
+    doSNOW \
+    \
     egg \
     encryptr \
     EnvStats \
     EpiEstim \
     epikit \
     epitrix \
-    evaluate
-
-RUN install2.r --error --skipinstalled -n 6 \
+    evaluate \
+    \
     fancycut \
     flextable \
     flux \
@@ -336,9 +329,8 @@ RUN install2.r --error --skipinstalled -n 6 \
     fracdiff \
     future \
     future.callr \
-    future.apply
-
-RUN install2.r --error --skipinstalled -n 6 \
+    future.apply \
+    \
     gdtools \
     GeneNet \
     geojsonio \
@@ -359,31 +351,26 @@ RUN install2.r --error --skipinstalled -n 6 \
     gmailr \
     GPArotation \
     gt \
-    gtsummary
-
-RUN install2.r --error --skipinstalled -n 6 \
+    gtsummary \
+    \
     HDInterval \
     Hmisc \
     htmlTable \
     htmltools \
     httpuv \
-    huxtable
-
-RUN install2.r --error --skipinstalled -n 6 \
+    huxtable \
+    \
     ineq \
     influenceR \
-    ISOweek
-
-RUN install2.r --error --skipinstalled -n 6 \
-    janitor
-
-RUN install2.r --error --skipinstalled -n 6 \
+    ISOweek \
+    \
+    janitor \
+    \
     kableExtra \
     keras \
     knitcitations \
-    knitr
-
-RUN install2.r --error --skipinstalled -n 6 \
+    knitr \
+    \
     labeling \
     leaflet \
     learnr \
@@ -391,9 +378,8 @@ RUN install2.r --error --skipinstalled -n 6 \
     listenv \
     lme4 \
     lmtest \
-    lomb
-
-RUN install2.r --error --skipinstalled -n 6 \
+    lomb \
+    \
     magick \
     mapproj \
     Matrix \
@@ -408,18 +394,15 @@ RUN install2.r --error --skipinstalled -n 6 \
     missRanger \
     multcomp \
     munsell \
-    mvmeta
-
-RUN install2.r --error --skipinstalled -n 6 \
-    ncdf4
-
-RUN install2.r --error --skipinstalled -n 6 \
+    mvmeta \
+    \
+    ncdf4 \
+    \
     odbc \
     officer \
     openxlsx \
-    org
-
-RUN install2.r --error --skipinstalled -n 6 \
+    org \
+    \
     packrat \
     pacman \
     pander \
@@ -440,14 +423,12 @@ RUN install2.r --error --skipinstalled -n 6 \
     progressr \
     pryr \
     pscl \
-    PxWebApiData
-
-RUN install2.r --error --skipinstalled -n 6 \
+    PxWebApiData \
+    \
     qs \
     quantmod \
-    quarto
-
-RUN install2.r --error --skipinstalled -n 6 \
+    quarto \
+    \
     RColorBrewer \
     RcppProgress \
     RcppRoll \
@@ -466,9 +447,8 @@ RUN install2.r --error --skipinstalled -n 6 \
     RPostgres \
     rsvg \
     rticles \
-    R.utils
-
-RUN install2.r --error --skipinstalled -n 6 \
+    R.utils \
+    \
     S7 \
     samplingbook \
     scholar \
@@ -485,9 +465,8 @@ RUN install2.r --error --skipinstalled -n 6 \
     surveillance \
     survey \
     survminer \
-    svglite
-
-RUN install2.r --error --skipinstalled -n 6 \
+    svglite \
+    \
     table1 \
     tableHTML \
     tensorflow \
@@ -496,27 +475,22 @@ RUN install2.r --error --skipinstalled -n 6 \
     tidymodels \
     timeDate \
     tseries \
-    TTR
-
-RUN install2.r --error --skipinstalled -n 6 \
+    TTR \
+    \
     units \
     urca \
-    uuid
-
-RUN install2.r --error --skipinstalled -n 6 \
-    writexl
-
-RUN install2.r --error --skipinstalled -n 6 \
+    uuid \
+    \
+    writexl \
+    \
     xgboost \
     xlsx \
     xts \
-    XML
-
-RUN install2.r --error --skipinstalled -n 6 \
+    XML \
+    \
     yaml \
-    yesno
-
-RUN install2.r --error --skipinstalled -n 6 \
+    yesno \
+    \
     zip
 
 # rstanarm
