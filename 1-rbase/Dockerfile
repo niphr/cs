@@ -526,10 +526,10 @@ RUN R -e "install.packages('rstanarm')"
 RUN R -e "install.packages('INLA', repos=c(getOption('repos'), INLA='https://inla.r-inla-download.org/R/stable'), dep=FALSE)"
 RUN chmod +x /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl.run /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl
 
-RUN R -e "devtools::install_github(\"csids/cstime\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
-RUN R -e "devtools::install_github(\"csids/cstidy\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
-RUN R -e "devtools::install_github(\"csids/csstyle\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
-RUN R -e "devtools::install_github(\"csids/cs9\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN R -e "devtools::install_github(\"niphr/cstime\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN R -e "devtools::install_github(\"niphr/cstidy\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN R -e "devtools::install_github(\"niphr/csstyle\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN R -e "devtools::install_github(\"niphr/cs9\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 RUN R -e "devtools::install_github(\"papadopoulos-lab/swereg\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
@@ -548,8 +548,8 @@ COPY content/install_ss_and_run_task_k8s.sh /usr/local/bin/install_ss_and_run_ta
 RUN chmod +x /usr/local/bin/install_ss_and_run_task.sh
 RUN chmod +x /usr/local/bin/install_ss_and_run_task_k8s.sh
 
-RUN git clone "https://github.com/csids/cs9example.git" "/cs9example"
-RUN R -e "devtools::install_github(\"csids/cs9example\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN git clone "https://github.com/niphr/cs9example.git" "/cs9example"
+RUN R -e "devtools::install_github(\"niphr/cs9example\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
 # Python libraries #
