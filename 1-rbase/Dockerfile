@@ -385,6 +385,7 @@ RUN install2.r --error --skipinstalled -n 4 \
     \
     \
     labeling \
+    languageserver \
     leaflet \
     learnr \
     lemon \
