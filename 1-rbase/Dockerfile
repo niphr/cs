@@ -527,8 +527,9 @@ RUN R -e "install.packages('rstanarm')"
 RUN R -e "install.packages('INLA', repos=c(getOption('repos'), INLA='https://inla.r-inla-download.org/R/stable'), dep=FALSE)"
 RUN chmod +x /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl.run /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl
 
-RUN R -e "devtools::install_github(\"niphr/cstime\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN R -e "devtools::install_github(\"niphr/csdb\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 RUN R -e "devtools::install_github(\"niphr/cstidy\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+RUN R -e "devtools::install_github(\"niphr/cstime\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 RUN R -e "devtools::install_github(\"niphr/csstyle\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 RUN R -e "devtools::install_github(\"niphr/cs9\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 RUN R -e "devtools::install_github(\"papadopoulos-lab/swereg\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
