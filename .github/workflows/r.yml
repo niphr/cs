@@ -29,8 +29,13 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build the image
-      run: cd 1-rbase && docker build . --build-arg R_VERSION=${{ env.VERSION }} --build-arg CRAN_CHECKPOINT_BINARY=${{ env.CRAN_CHECKPOINT_BINARY }} --build-arg CRAN_CHECKPOINT_SOURCE=${{ env.CRAN_CHECKPOINT_SOURCE }} --build-arg GITHUB_PAT=${{ secrets.GITHUB_TOKEN }} --tag ghcr.io/${{ env.REPO_NAME }}/rbase:${{ env.VERSION }}
-        
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 60
+        max_attempts: 3
+        retry_wait_seconds: 60
+        command: cd 1-rbase && docker build . --build-arg R_VERSION=${{ env.VERSION }} --build-arg CRAN_CHECKPOINT_BINARY=${{ env.CRAN_CHECKPOINT_BINARY }} --build-arg CRAN_CHECKPOINT_SOURCE=${{ env.CRAN_CHECKPOINT_SOURCE }} --build-arg GITHUB_PAT=${{ secrets.GITHUB_TOKEN }} --tag ghcr.io/${{ env.REPO_NAME }}/rbase:${{ env.VERSION }}
+
     - name: Push the image to GHCR (versioned)
       run: docker push ghcr.io/${{ env.REPO_NAME }}/rbase:${{ env.VERSION }}
     - name: Clean up untagged images
@@ -63,8 +68,13 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build the image
-      run: cd 2-rworkbench && docker build . --build-arg R_VERSION=${{ env.VERSION }} --build-arg GITHUB_PAT=${{ secrets.GITHUB_TOKEN }} --tag ghcr.io/${{ env.REPO_NAME }}/rworkbench:${{ env.VERSION }}
-        
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 30
+        max_attempts: 3
+        retry_wait_seconds: 60
+        command: cd 2-rworkbench && docker build . --build-arg R_VERSION=${{ env.VERSION }} --build-arg GITHUB_PAT=${{ secrets.GITHUB_TOKEN }} --tag ghcr.io/${{ env.REPO_NAME }}/rworkbench:${{ env.VERSION }}
+
     - name: Push the image to GHCR (versioned)
       run: docker push ghcr.io/${{ env.REPO_NAME }}/rworkbench:${{ env.VERSION }}
       
