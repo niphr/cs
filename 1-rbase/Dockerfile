@@ -330,6 +330,7 @@ RUN install2.r --error --skipinstalled -n 4 \
     fancycut \
     flextable \
     flux \
+    fst \
     forecast \
     foreach \
     Formula \
