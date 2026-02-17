@@ -38,9 +38,3 @@ jobs:
 
     - name: Push the image to GHCR (versioned)
       run: docker push ghcr.io/${{ env.REPO_NAME }}/rbase:${{ env.VERSION }}
-    - name: Clean up old images
-      uses: actions/delete-package-versions@v5
-      with:
-        package-name: 'cs/rbase'
-        package-type: 'container'
-        min-versions-to-keep: 1
