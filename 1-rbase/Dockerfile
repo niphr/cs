@@ -445,7 +445,7 @@ RUN install2.r --error --skipinstalled -n 4 \
     PxWebApiData \
     \
     \
-    qs \
+    qs2 \
     quantmod \
     quarto \
     \
