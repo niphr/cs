@@ -391,6 +391,7 @@ RUN install2.r --error --skipinstalled -n 4 \
     learnr \
     lemon \
     listenv \
+    lobstr \
     lme4 \
     lmtest \
     lomb \
@@ -440,7 +441,6 @@ RUN install2.r --error --skipinstalled -n 4 \
     processx \
     profvis \
     progressr \
-    pryr \
     pscl \
     PxWebApiData \
     \
