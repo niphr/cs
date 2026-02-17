@@ -75,6 +75,9 @@ Private packages installed via devtools with GITHUB_PAT:
 - `papadopoulos-lab/swereg`
 - `norsyss/norsyss`
 
+### Package Notes
+- `pryr` was replaced with `lobstr` — `pryr` is not available for R >= 4.5.1
+
 ### Container User Model
 - Runs as non-root `airflow` user (UID 50000) for Kubernetes compliance
 - AIRFLOW_HOME set to ephemeral `/tmp/airflow` for horizontal scaling
