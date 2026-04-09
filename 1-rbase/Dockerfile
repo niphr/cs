@@ -425,6 +425,7 @@ RUN install2.r --error --skipinstalled -n 4 \
     \
     packrat \
     pacman \
+    pak \
     pander \
     pbapply \
     pbmcapply \
