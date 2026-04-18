@@ -61,6 +61,7 @@ RUN apt-get update -y && \
     git \
     gnupg \
     jags \
+    jq \
     krb5-user \
     libclang-dev \
     libcurl4-openssl-dev \
