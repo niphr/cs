@@ -378,6 +378,7 @@ RUN install2.r --error --skipinstalled -n 4 \
     \
     \
     HDInterval \
+    hexSticker \
     Hmisc \
     htmlTable \
     htmltools \
