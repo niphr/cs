@@ -1,8 +1,8 @@
 name: Build R images
 env:
-  VERSION: 4.5.3
-  CRAN_CHECKPOINT_BINARY: https://packagemanager.posit.co/cran/__linux__/jammy/2026-04-04
-  CRAN_CHECKPOINT_SOURCE: https://packagemanager.posit.co/cran/2026-04-04
+  VERSION: 4.6.0
+  CRAN_CHECKPOINT_BINARY: https://packagemanager.posit.co/cran/__linux__/jammy/2026-05-08
+  CRAN_CHECKPOINT_SOURCE: https://packagemanager.posit.co/cran/2026-05-08
 on:
   workflow_dispatch:
   schedule:
@@ -37,4 +37,9 @@ jobs:
         command: cd 1-rbase && docker build . --build-arg R_VERSION=${{ env.VERSION }} --build-arg CRAN_CHECKPOINT_BINARY=${{ env.CRAN_CHECKPOINT_BINARY }} --build-arg CRAN_CHECKPOINT_SOURCE=${{ env.CRAN_CHECKPOINT_SOURCE }} --build-arg GITHUB_PAT=${{ secrets.GITHUB_TOKEN }} --tag ghcr.io/${{ env.REPO_NAME }}/rbase:${{ env.VERSION }}
 
     - name: Push the image to GHCR (versioned)
-      run: docker push ghcr.io/${{ env.REPO_NAME }}/rbase:${{ env.VERSION }}
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 15
+        max_attempts: 3
+        retry_wait_seconds: 30
+        command: docker push ghcr.io/${{ env.REPO_NAME }}/rbase:${{ env.VERSION }}
