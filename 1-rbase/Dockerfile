@@ -1,6 +1,6 @@
 FROM docker.io/ubuntu:jammy
 
-ARG R_VERSION=4.2.2
+ARG R_VERSION=4.6.0
 ARG CRAN_CHECKPOINT_BINARY=https://packagemanager.rstudio.com/all/766976
 ARG CRAN_CHECKPOINT_SOURCE=https://packagemanager.rstudio.com/all/766976
 
@@ -17,6 +17,9 @@ LABEL org.opencontainers.image.licenses=MIT
 
 ENV R_HOME="/opt/R/${R_VERSION}/lib/R"
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Make apt resilient to transient network failures
+RUN echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries
 
 ########################
 # Locale configuration #
@@ -179,7 +182,7 @@ RUN echo export PATH >> /etc/profile
 #####
 
 # Install R
-RUN wget https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb && \
+RUN wget --tries=5 --retry-connrefused --waitretry=10 https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb && \
     apt-get update -qq && \
     DEBIAN_FRONTEND=noninteractive apt-get install -f -y ./r-${R_VERSION}_1_amd64.deb && \
     ln -s /opt/R/${R_VERSION}/bin/R /usr/bin/R && \
@@ -218,7 +221,11 @@ RUN install2.r --error --skipinstalled -d TRUE -n 6 \
 ##############
 
 # Install TinyTeX
-RUN wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" | sh && \
+# yihui's installer can silently exit 0 on partial failure, so verify tlmgr exists
+# before continuing — otherwise the chained mv/tlmgr commands fail with a
+# confusing "not found" error far from the real cause.
+RUN wget --tries=5 --retry-connrefused --waitretry=10 -qO- "https://yihui.org/tinytex/install-bin-unix.sh" | sh && \
+    ls /root/.TinyTeX/bin/*/tlmgr && \
     /root/.TinyTeX/bin/*/tlmgr path remove && \
     mv /root/.TinyTeX/ /opt/TinyTeX && \
     /opt/TinyTeX/bin/*/tlmgr option sys_bin /usr/local/bin && \
@@ -271,6 +278,11 @@ RUN tlmgr install \
 
 # quarto
 RUN curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && gdebi --non-interactive quarto-linux-amd64.deb
+
+# air (Posit R formatter / linter CLI: https://posit-dev.github.io/air/cli.html)
+RUN curl --retry 5 --retry-delay 5 --retry-all-errors -LsSf \
+    https://github.com/posit-dev/air/releases/latest/download/air-installer.sh \
+    | env AIR_INSTALL_DIR=/usr/local/bin sh
 
 ##############
 # R packages #
