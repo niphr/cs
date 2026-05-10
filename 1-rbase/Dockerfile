@@ -221,15 +221,15 @@ RUN install2.r --error --skipinstalled -d TRUE -n 6 \
 ##############
 
 # Install TinyTeX
-# yihui's installer can silently exit 0 on partial failure, so verify tlmgr exists
-# before continuing — otherwise the chained mv/tlmgr commands fail with a
-# confusing "not found" error far from the real cause.
-RUN wget --tries=5 --retry-connrefused --waitretry=10 -qO- "https://yihui.org/tinytex/install-bin-unix.sh" | sh && \
-    ls /root/.TinyTeX/bin/*/tlmgr && \
-    /root/.TinyTeX/bin/*/tlmgr path remove && \
-    mv /root/.TinyTeX/ /opt/TinyTeX && \
+# The standalone install-bin-unix.sh shell installer was silently exiting 0
+# without installing anything. Use the tinytex R package's own installer
+# instead — better error handling, maintained alongside the R package, and
+# installs into a fixed dir. Verify tlmgr is on PATH afterwards so any silent
+# failure surfaces here rather than three commands later.
+RUN Rscript -e "tinytex::install_tinytex(dir = '/opt/TinyTeX', force = TRUE)" && \
     /opt/TinyTeX/bin/*/tlmgr option sys_bin /usr/local/bin && \
     /opt/TinyTeX/bin/*/tlmgr path add && \
+    command -v tlmgr && \
     apt-get clean all && \
     rm -rf /var/lib/apt/lists/*
 
