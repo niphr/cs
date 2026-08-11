@@ -4,16 +4,18 @@ Docker images for running R with the CS9 framework.
 
 ## Images
 
-Two images are built nightly:
+One image is built nightly:
 
 - `rbase` - R with 100+ packages, TinyTeX, Quarto, and Airflow
-- `rworkbench` - adds Posit Workbench on top of rbase
+
+An `rworkbench` image that added Posit Workbench on top of `rbase` was built
+until commit `18f36f5` removed the `2-rworkbench` folder. The workflow no longer
+builds it.
 
 ## Usage
 
 ```bash
-docker pull ghcr.io/niphr/cs/rbase:4.5.1
-docker pull ghcr.io/niphr/cs/rworkbench:4.5.1
+docker pull ghcr.io/niphr/cs/rbase:4.6.1
 ```
 
 ## Branches

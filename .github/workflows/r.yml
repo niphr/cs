@@ -1,8 +1,8 @@
 name: Build R images
 env:
-  VERSION: 4.6.0
-  CRAN_CHECKPOINT_BINARY: https://packagemanager.posit.co/cran/__linux__/jammy/2026-05-08
-  CRAN_CHECKPOINT_SOURCE: https://packagemanager.posit.co/cran/2026-05-08
+  VERSION: 4.6.1
+  CRAN_CHECKPOINT_BINARY: https://packagemanager.posit.co/cran/__linux__/jammy/2026-08-10
+  CRAN_CHECKPOINT_SOURCE: https://packagemanager.posit.co/cran/2026-08-10
 on:
   workflow_dispatch:
   schedule:
