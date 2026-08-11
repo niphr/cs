@@ -1,6 +1,6 @@
 FROM docker.io/ubuntu:jammy
 
-ARG R_VERSION=4.6.0
+ARG R_VERSION=4.6.1
 ARG CRAN_CHECKPOINT_BINARY=https://packagemanager.rstudio.com/all/766976
 ARG CRAN_CHECKPOINT_SOURCE=https://packagemanager.rstudio.com/all/766976
 
@@ -554,7 +554,11 @@ RUN R -e "devtools::install_github(\"papadopoulos-lab/swereg\", upgrade=\"never\
 # Extra R packages #
 ####################
 
-RUN R -e "devtools::install_github(\"norsyss/norsyss\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+# norsyss moved to the niphr org on 2026-05-12. A new PRIVATE repo was then
+# created at the old name norsyss/norsyss, which destroyed GitHub's rename
+# redirect. secrets.GITHUB_TOKEN is scoped to niphr/cs and cannot read a
+# private repo in another org, so the old path returns HTTP 404.
+RUN R -e "devtools::install_github(\"niphr/norsyss\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
 # CS9 #
