@@ -533,8 +533,25 @@ RUN install2.r --error --skipinstalled -n 4 \
 RUN R -e "install.packages('rstanarm')"
 
 # INLA
-RUN R -e "install.packages('INLA', repos=c(getOption('repos'), INLA='https://inla.r-inla-download.org/R/stable'), dep=FALSE)"
-RUN chmod +x /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl.run /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl
+#
+# https://inla.r-inla-download.org/R/stable is the ONE repository here with no
+# pin of any kind. CRAN is a dated snapshot and the cs* packages come from a
+# fixed r-universe path, but this is whatever INLA published today.
+#
+# install.packages() reports an unreachable repository as a WARNING, so R exits
+# 0 and the layer goes green with nothing installed. On 2026-08-13 the nightly
+# build did exactly that: INLA was never fetched, and the build died on the
+# chmod below with a message about a missing file rather than about INLA. The
+# same commit had built four hours earlier.
+#
+# Assert instead. The namespace MUST load and the Linux binaries MUST exist.
+RUN R -e "install.packages('INLA', repos = c(getOption('repos'), INLA = 'https://inla.r-inla-download.org/R/stable'), dep = FALSE); \
+    if (!requireNamespace('INLA', quietly = TRUE)) stop('INLA did not install. The repository was probably unreachable; install.packages() only warns.'); \
+    cat('INLA', as.character(packageVersion('INLA')), 'installed\n')"
+
+RUN INLA_BIN="/opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit"; \
+    test -d "$INLA_BIN" || { echo "INLA installed without $INLA_BIN"; exit 1; }; \
+    chmod +x "$INLA_BIN/inla.mkl.run" "$INLA_BIN/inla.mkl"
 
 # The cs* packages come from the niphr r-universe, which serves prebuilt Linux
 # binaries for this distribution and R version. Two reasons over install_github:
