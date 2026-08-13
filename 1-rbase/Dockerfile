@@ -310,13 +310,6 @@ RUN install2.r --error --skipinstalled -n 4 \
     corrr \
     cowplot \
     cranlogs \
-    csalert \
-    csdata \
-    csdb \
-    csmaps \
-    cstidy \
-    cstime \
-    csutil \
     \
     \
     data.table \
@@ -543,11 +536,27 @@ RUN R -e "install.packages('rstanarm')"
 RUN R -e "install.packages('INLA', repos=c(getOption('repos'), INLA='https://inla.r-inla-download.org/R/stable'), dep=FALSE)"
 RUN chmod +x /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl.run /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl
 
-RUN R -e "devtools::install_github(\"niphr/csdb\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
-RUN R -e "devtools::install_github(\"niphr/cstidy\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
-RUN R -e "devtools::install_github(\"niphr/cstime\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
-RUN R -e "devtools::install_github(\"niphr/csstyle\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
-RUN R -e "devtools::install_github(\"niphr/cs9\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+# The cs* packages come from the niphr r-universe, which serves prebuilt Linux
+# binaries for this distribution and R version. Two reasons over install_github:
+# the packages need no compilation, and the four without an install_github line
+# here were silently pinned to whatever the CRAN checkpoint held. On 2026-08-13
+# that was csutil 2023.4.25, csalert 2024.6.24, csmaps 2025.8.21 and csdata
+# 2026.7.2, against 2026.8.6 or newer in the universe.
+#
+# getOption('repos') stays in the list so dependencies still resolve from the
+# pinned CRAN checkpoint. The universe copies win on version, not repo order,
+# so listing it first is a readability choice and not load bearing.
+#
+# Derive the path from getRversion(). A hardcoded R version returns HTTP 404
+# after an R bump, and the install then falls back to source or fails.
+#
+# These versions are NOT pinned. The universe serves head of main and keeps
+# only the newest build, so it has no equivalent of CRAN_CHECKPOINT_*.
+RUN R -e "install.packages( \
+      c('csalert','csdata','csdb','csmaps','csstyle','cstidy','cstime','csutil','cs9','cs9example'), \
+      repos = c(sprintf('https://niphr.r-universe.dev/bin/linux/jammy/%s', getRversion()[,1:2]), \
+                getOption('repos')))"
+
 RUN R -e "devtools::install_github(\"papadopoulos-lab/swereg\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
@@ -570,8 +579,8 @@ COPY content/install_ss_and_run_task_k8s.sh /usr/local/bin/install_ss_and_run_ta
 RUN chmod +x /usr/local/bin/install_ss_and_run_task.sh
 RUN chmod +x /usr/local/bin/install_ss_and_run_task_k8s.sh
 
+# The checkout stays. cs9example itself is installed from the r-universe above.
 RUN git clone "https://github.com/niphr/cs9example.git" "/cs9example"
-RUN R -e "devtools::install_github(\"niphr/cs9example\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
 # Python libraries #
