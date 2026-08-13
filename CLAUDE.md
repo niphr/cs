@@ -85,12 +85,53 @@ Task runner scripts in the image at `/usr/local/bin/`:
 - `install_ss_and_run_task.sh` - Docker container version
 - `install_ss_and_run_task_k8s.sh` - Kubernetes version
 
+### The cs\* packages come from the r-universe, NOT from GitHub
+
+Since 2026-08-13 all ten cs\* packages install from
+`https://niphr.r-universe.dev/bin/linux/<distro>/<rver>` in one layer:
+`csalert`, `csdata`, `csdb`, `csmaps`, `csstyle`, `cstidy`, `cstime`, `csutil`,
+`cs9`, `cs9example`. They are prebuilt Linux binaries and need no compilation.
+
+Three behaviours of that repository, all measured on R 4.6.1 and jammy. Know
+them before you change the URL.
+
+**The r-universe NEVER returns 404.** Every
+`bin/linux/<anything>/<anything>/src/contrib/PACKAGES` returns HTTP 200 with all
+ten packages. You cannot detect a wrong URL by its status code.
+
+**The R version segment IS honoured. The distro segment is IGNORED.** A wrong R
+version, such as `jammy/9.9`, degrades to source and still installs the correct
+package. A wrong distro, such as `bogusdistro/4.6`, returns the jammy BINARY.
+So a future move to noble MUST change this URL by hand. Nothing will report the
+mismatch, and the image will carry jammy binaries built against jammy ABI.
+
+**`install.packages()` fails open.** It reports a missing package or an
+unreachable repository as a warning, so R exits 0 and the Docker layer goes
+green. The Dockerfile therefore asserts after installing: every package MUST
+load and its version MUST equal the version the universe offers. Do not remove
+that assertion. It was driven red on purpose, by an unreachable host and by an
+absent package, and both correctly halted the build.
+
+R resolves a package present in two repositories by HIGHEST VERSION, not by
+repository order. Verified with the CRAN checkpoint listed first: all ten still
+came from the universe.
+
+**CalVer hazard.** `cs9` and `cs9example` use `YY.M.D` (`26.8.6`). The other
+eight use `YYYY.M.D` (`2026.8.6`). This is safe today only because `cs9` and
+`cs9example` are absent from CRAN, so the two schemes never compare. If `cs9` is
+ever published to CRAN as `2026.x`, CRAN wins permanently, because
+`package_version("2026.8.6") > package_version("26.8.7")` is TRUE.
+
 ### GitHub-Integrated Packages
-Installed via devtools with GITHUB_PAT. All are public today, so the workflow's
-`secrets.GITHUB_TOKEN` is enough:
-- `niphr/csdb`, `niphr/cstidy`, `niphr/cstime`, `niphr/csstyle`, `niphr/cs9`, `niphr/cs9example`
+Two packages are still installed via devtools with GITHUB_PAT. Both are public
+today, so the workflow's `secrets.GITHUB_TOKEN` is enough:
 - `papadopoulos-lab/swereg`
 - `niphr/norsyss`
+
+The `/cs9example` git clone also stays, and it is a clone only. The `cs9example`
+R package itself now comes from the r-universe. The clone tracks GitHub HEAD
+while the installed package is the newest universe build, so the two can be
+different commits.
 
 **`secrets.GITHUB_TOKEN` is scoped to `niphr/cs` and cannot read a private repo
 in another org.** If one of these packages goes private, the build fails with
