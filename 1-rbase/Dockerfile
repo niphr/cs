@@ -532,26 +532,23 @@ RUN install2.r --error --skipinstalled -n 4 \
 # rstanarm
 RUN R -e "install.packages('rstanarm')"
 
-# INLA
+# INLA was installed here until 2026-08-13. REMOVED, do not reinstate without a
+# reason and a pin.
 #
-# https://inla.r-inla-download.org/R/stable is the ONE repository here with no
-# pin of any kind. CRAN is a dated snapshot and the cs* packages come from a
-# fixed r-universe path, but this is whatever INLA published today.
+# It came from https://inla.r-inla-download.org/R/stable, the one repository in
+# this image with no pin of any kind. CRAN is a dated snapshot and the cs*
+# packages come from a fixed r-universe path, so a transient upstream problem
+# there could not be absorbed by a pin.
 #
-# install.packages() reports an unreachable repository as a WARNING, so R exits
-# 0 and the layer goes green with nothing installed. On 2026-08-13 the nightly
-# build did exactly that: INLA was never fetched, and the build died on the
-# chmod below with a message about a missing file rather than about INLA. The
-# same commit had built four hours earlier.
+# On 2026-08-13 the nightly build failed because INLA was never fetched at all.
+# install.packages() reports an unreachable repository as a WARNING, so R exited
+# 0, the layer went green with nothing installed, and the build died on a later
+# chmod complaining about a missing file rather than about INLA. The same commit
+# had built four hours earlier.
 #
-# Assert instead. The namespace MUST load and the Linux binaries MUST exist.
-RUN R -e "install.packages('INLA', repos = c(getOption('repos'), INLA = 'https://inla.r-inla-download.org/R/stable'), dep = FALSE); \
-    if (!requireNamespace('INLA', quietly = TRUE)) stop('INLA did not install. The repository was probably unreachable; install.packages() only warns.'); \
-    cat('INLA', as.character(packageVersion('INLA')), 'installed\n')"
-
-RUN INLA_BIN="/opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit"; \
-    test -d "$INLA_BIN" || { echo "INLA installed without $INLA_BIN"; exit 1; }; \
-    chmod +x "$INLA_BIN/inla.mkl.run" "$INLA_BIN/inla.mkl"
+# Nothing used it. Checked across norsyss.cs9, norsyss, cs9, cs9example, csdb,
+# cstidy and csalert: zero references, not in any DESCRIPTION, and not in
+# loadedNamespaces() after norsyss.cs9 loads.
 
 # The cs* packages come from the niphr r-universe, which serves prebuilt Linux
 # binaries for this distribution and R version. Two reasons over install_github:
