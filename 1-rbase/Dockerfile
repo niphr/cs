@@ -394,7 +394,6 @@ RUN install2.r --error --skipinstalled -n 4 \
     \
     labeling \
     languageserver \
-    leaflet \
     learnr \
     lemon \
     listenv \
@@ -528,6 +527,15 @@ RUN install2.r --error --skipinstalled -n 4 \
     \
     \
     zip
+
+# install2.r reports a package that failed to build as a WARNING and still exits 0,
+# so the layer goes green with the package missing. That is how this image shipped
+# without leaflet: leaflet needs terra, terra does not compile against the GDAL
+# headers in jammy, and nothing reported it.
+#
+# Assert that every package named in the install2.r block above is installed.
+# Keep this list in step when adding or removing a package there.
+RUN R -e "pkgs <- c('ClustOfVar','DescTools','EnvStats','EpiEstim','Formula','GPArotation','GeneNet','HDInterval','Hmisc','ISOweek','Matrix','MatrixModels','PxWebApiData','R.oo','R.utils','RColorBrewer','RMariaDB','RMySQL','RODBC','RPostgres','RcppProgress','RcppRoll','S7','TTR','XML','arm','bayestestR','bibtex','blastula','blogdown','bookdown','brew','caret','corpcor','corrr','cowplot','cranlogs','data.table','dbplyr','directlabels','distill','dlnm','dlstats','doFuture','doSNOW','drat','drc','egg','encryptr','epikit','epitrix','evaluate','fancycut','flextable','foreach','forecast','fracdiff','fst','future','future.apply','future.callr','gdtools','geojsonio','ggdendro','ggnewscale','ggpubr','ggrepel','ggsurvfit','ggthemes','ggvis','gh','git2r','glm2','glmnet','glmnetUtils','globals','gmailr','gower','gt','gtsummary','hexSticker','htmlTable','htmltools','httpuv','huxtable','ineq','influenceR','janitor','kableExtra','keras','knitcitations','knitr','labeling','languageserver','learnr','lemon','listenv','lme4','lmtest','lobstr','lomb','magick','mapproj','matrixStats','mclust','mem','memoise','merTools','mice','miniCRAN','missRanger','multcomp','munsell','mvmeta','ncdf4','odbc','officer','openxlsx','org','packrat','pacman','pak','pander','pbapply','pbmcapply','pbs','pinp','pkgdown','plnr','plumber','pomp','pool','postcards','ppcor','precommit','processx','profvis','progressr','pscl','qs2','quantmod','quarto','readtext','reticulate','rio','rjtools','rmapshaper','rmarkdown','rms','roxygen2','rsvg','rticles','samplingbook','scholar','selectiveInference','shiny','shinyBS','shinycssloaders','shinydashboard','skimr','sortable','splitstackshape','staplr','styler','surveillance','survey','survminer','svglite','table1','tableHTML','tensorflow','testthat','tidymodels','tidyverse','timeDate','tseries','units','urca','uuid','writexl','xgboost','xlsx','xts','yaml','yesno'); miss <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]; if (length(miss)) stop('install2.r did not install: ', paste(miss, collapse = ', ')); cat(length(pkgs), 'requested packages all present\n')"
 
 # rstanarm
 RUN R -e "install.packages('rstanarm')"
