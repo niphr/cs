@@ -552,10 +552,19 @@ RUN chmod +x /opt/R/$R_VERSION/lib/R/library/INLA/bin/linux/64bit/inla.mkl.run /
 #
 # These versions are NOT pinned. The universe serves head of main and keeps
 # only the newest build, so it has no equivalent of CRAN_CHECKPOINT_*.
-RUN R -e "install.packages( \
-      c('csalert','csdata','csdb','csmaps','csstyle','cstidy','cstime','csutil','cs9','cs9example'), \
-      repos = c(sprintf('https://niphr.r-universe.dev/bin/linux/jammy/%s', getRversion()[,1:2]), \
-                getOption('repos')))"
+# install.packages() reports a missing package or an unreachable repository as a
+# WARNING, so R exits 0 and the layer goes green. Assert afterwards instead:
+# every package MUST load, and its installed version MUST equal the version the
+# universe offers. That fails the build on an outage, on a partial install, and
+# on a silent downgrade to the older CRAN checkpoint copy.
+RUN R -e "pkgs <- c('csalert','csdata','csdb','csmaps','csstyle','cstidy','cstime','csutil','cs9','cs9example'); \
+    uni <- sprintf('https://niphr.r-universe.dev/bin/linux/jammy/%s', getRversion()[,1:2]); \
+    want <- available.packages(repos = uni)[pkgs, 'Version']; \
+    install.packages(pkgs, repos = c(uni, getOption('repos'))); \
+    got <- sapply(pkgs, function(p) tryCatch(as.character(packageVersion(p)), error = function(e) NA_character_)); \
+    bad <- pkgs[is.na(got) | got != want]; \
+    if (length(bad)) stop('cs* install failed or wrong version: ', paste(sprintf('%s want=%s got=%s', bad, want[bad], got[bad]), collapse='; ')); \
+    print(data.frame(package = pkgs, version = unname(got)))"
 
 RUN R -e "devtools::install_github(\"papadopoulos-lab/swereg\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
