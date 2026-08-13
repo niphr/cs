@@ -572,11 +572,14 @@ RUN R -e "devtools::install_github(\"papadopoulos-lab/swereg\", upgrade=\"never\
 # Extra R packages #
 ####################
 
-# norsyss moved to the niphr org on 2026-05-12. A new PRIVATE repo was then
-# created at the old name norsyss/norsyss, which destroyed GitHub's rename
-# redirect. secrets.GITHUB_TOKEN is scoped to niphr/cs and cannot read a
-# private repo in another org, so the old path returns HTTP 404.
-RUN R -e "devtools::install_github(\"niphr/norsyss\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
+# norsyss was installed here until 2026-08-13. It is now RETIRED: everything in
+# it moved into norsyss.cs9, which was its only consumer. See the notice at
+# https://github.com/niphr/norsyss. Do not reinstate it. Anything needing icpc2,
+# reports, tariff, fida_pilot, get_and_process_raw_data() or get_providers_n()
+# takes them from norsyss.cs9 instead.
+#
+# Installing it from GitHub HEAD with no version pin is what let the workspace
+# pods sit on norsyss 2024.1.8 for over two years with nothing reporting it.
 
 ####################
 # CS9 #
