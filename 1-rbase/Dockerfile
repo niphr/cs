@@ -588,6 +588,35 @@ RUN R -e "pkgs <- c('csalert','csdata','csdb','csmaps','csstyle','cstidy','cstim
     if (length(bad)) stop('cs* install failed or wrong version: ', paste(sprintf('%s want=%s got=%s', bad, want[bad], got[bad]), collapse='; ')); \
     print(data.frame(package = pkgs, version = unname(got)))"
 
+# plnr comes from a newer CRAN snapshot than the checkpoint. Added 2026-10-02.
+#
+# The checkpoint that the build workflow passes in is the 2026-08-10 snapshot.
+# It holds plnr 2025.11.22. In that version Plan$add_analysis_from_list() reads
+# names(df), and df silently resolves to the function stats::df. plnr 2026.9.23
+# fixes it. A newer checkpoint would change most CRAN packages, so this layer
+# replaces plnr alone.
+#
+# The source is the Posit Package Manager snapshot of 2026-10-01 for jammy. It
+# serves a prebuilt binary for this R version, from the same host as the
+# checkpoint. A dated snapshot keeps the layer reproducible; latest would not.
+# dependencies = FALSE keeps every plnr dependency at its checkpoint version.
+# On 2026-10-02 the checkpoint held every package in the plnr 2026.9.23 Imports,
+# and that field sets no minimum version.
+#
+# Keep this layer after every layer that can install plnr from the checkpoint.
+#
+# install.packages() reports a failed download or an unreachable repository as
+# a WARNING, so R exits 0 and the layer goes green with the old plnr. Assert
+# afterwards instead: plnr MUST be 2026.9.23 or newer, it MUST load, and exactly
+# one copy MUST exist across .libPaths(), so no old copy can shadow it.
+RUN R -e "install.packages('plnr', repos = 'https://packagemanager.posit.co/cran/__linux__/jammy/2026-10-01', dependencies = FALSE); \
+    got <- tryCatch(as.character(packageVersion('plnr')), error = function(e) NA_character_); \
+    if (is.na(got) || package_version(got) < '2026.9.23') stop('plnr install failed or too old: want >= 2026.9.23, got ', got); \
+    n <- sum(dir.exists(file.path(.libPaths(), 'plnr'))); \
+    if (n != 1) stop('expected exactly one plnr across .libPaths(), found ', n, ': ', paste(.libPaths(), collapse = ' ')); \
+    invisible(loadNamespace('plnr')); \
+    cat('plnr', got, 'installed and loads\n')"
+
 RUN R -e "devtools::install_github(\"papadopoulos-lab/swereg\", upgrade=\"never\", auth_token = \"$GITHUB_PAT\")"
 
 ####################
