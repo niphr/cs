@@ -279,6 +279,16 @@ RUN tlmgr install \
 # quarto
 RUN curl -LO https://quarto.org/download/latest/quarto-linux-amd64.deb && gdebi --non-interactive quarto-linux-amd64.deb
 
+# Render one PDF as root, with the LaTeX setup of the norsyss.cs9 weekly report.
+# Quarto installs each missing TeX package here (luatexbase was missing on
+# 2026-10-20). A pod runs as uid 1000 and cannot write /opt/TinyTeX, so there it
+# fails instead. The build stops when the PDF does not render.
+COPY content/quarto-smoke.qmd /tmp/quarto-smoke/quarto-smoke.qmd
+RUN cd /tmp/quarto-smoke && \
+    quarto render quarto-smoke.qmd --to pdf && \
+    test -s quarto-smoke.pdf && \
+    rm -rf /tmp/quarto-smoke
+
 # air (Posit R formatter / linter CLI: https://posit-dev.github.io/air/cli.html)
 RUN curl --retry 5 --retry-delay 5 --retry-all-errors -LsSf \
     https://github.com/posit-dev/air/releases/latest/download/air-installer.sh \

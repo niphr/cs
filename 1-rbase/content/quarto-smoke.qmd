@@ -1,0 +1,25 @@
+---
+title: "Quarto PDF smoke test"
+format:
+  pdf:
+    documentclass: scrartcl
+    papersize: a4paper
+    fontsize: '10'
+    linestretch: 1.25
+    indent: true
+    fig-pos: 'H'
+    include-in-header:
+      text: |
+        \usepackage{scrlayer-scrpage}
+        \rohead{Smoke}
+geometry:
+  - top=20mm
+  - left=15mm
+toc: true
+number-sections: true
+lang: nn
+---
+
+# Del
+
+Ein setning med æ, ø og å.
