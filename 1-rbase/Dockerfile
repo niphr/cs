@@ -1,14 +1,15 @@
-# The one place the Ubuntu release is named. The R .deb, the Microsoft repo, the
-# r-universe and the plnr snapshot all follow it. CRAN_CHECKPOINT_BINARY comes
-# from the workflow on main and names the release in its path; the check below
-# stops the build when it names another one.
+# The Ubuntu release of the base image. The R .deb, the Microsoft repo, the
+# r-universe and the plnr snapshot follow it; apt package names and the Python
+# version below do not. CRAN_CHECKPOINT_BINARY comes from the workflow on main
+# and names the release in its path; the check below stops the build when it
+# names another one.
 ARG UBUNTU_CODENAME=noble
 FROM docker.io/ubuntu:${UBUNTU_CODENAME}
 
 ARG UBUNTU_CODENAME
 ARG R_VERSION=4.6.1
-ARG CRAN_CHECKPOINT_BINARY=https://packagemanager.rstudio.com/all/766976
-ARG CRAN_CHECKPOINT_SOURCE=https://packagemanager.rstudio.com/all/766976
+ARG CRAN_CHECKPOINT_BINARY=https://packagemanager.posit.co/cran/__linux__/noble/2026-08-10
+ARG CRAN_CHECKPOINT_SOURCE=https://packagemanager.posit.co/cran/2026-08-10
 
 ARG AIRFLOW_UID=50000
 ARG AIRFLOW_GID=50000
@@ -34,8 +35,8 @@ RUN case "$CRAN_CHECKPOINT_BINARY" in \
 # Make apt resilient to transient network failures
 RUN echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries
 
-# Since noble the base image has a user 'ubuntu' with uid 1000. Images built on
-# this one create their own uid-1000 user (ruser in the SSH workspace).
+# The noble base image ships a user 'ubuntu' with uid 1000. Images built on this
+# one create their own uid-1000 user (ruser in the SSH workspace).
 RUN if id ubuntu >/dev/null 2>&1; then userdel -r ubuntu; fi
 
 ########################
@@ -179,7 +180,7 @@ RUN apt-get update -y && \
 # MSSQL drivers
 RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
   && . /etc/os-release \
-  && curl -fsSL https://packages.microsoft.com/config/ubuntu/${VERSION_ID}/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+  && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/${VERSION_ID}/prod ${VERSION_CODENAME} main" > /etc/apt/sources.list.d/mssql-release.list \
   && apt-get update \
   && ACCEPT_EULA=Y apt-get install --yes --no-install-recommends msodbcsql17
 
@@ -677,12 +678,16 @@ RUN git clone "https://github.com/niphr/cs9example.git" "/cs9example"
 # Python libraries #
 ####################
 
-# Since noble the system Python refuses pip installs (PEP 668). This image
-# installs into it on purpose, as it did on jammy, at build time and in pods.
-# pip cannot upgrade a package apt installed (no RECORD file), so installs that
-# pull a newer one (packaging, for pre-commit and Airflow) use --ignore-installed;
-# the copy in /usr/local shadows the apt one.
+# The system Python refuses pip installs (PEP 668). This image installs into it
+# on purpose, at build time and in pods, so tasks can still pip install.
+# pip cannot replace a package apt installed (no RECORD file), so the installs
+# that need a newer one use --ignore-installed, and the copy in /usr/local
+# shadows the apt one. --ignore-installed also skips uninstalling an older copy
+# in /usr/local, leaving two versions side by side; pre-commit therefore
+# resolves against the Airflow constraints too, so Airflow reinstalls the same
+# versions.
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
+ARG AIRFLOW_CONSTRAINTS=https://raw.githubusercontent.com/apache/airflow/constraints-3.1.1/constraints-3.12.txt
 
 # reticulate, python, and marrow mailer
 RUN echo "RETICULATE_MINICONDA_ENABLED=FALSE" >> $R_HOME/etc/Renviron
@@ -694,7 +699,7 @@ RUN python3 -m pip install --upgrade git+https://github.com/LexMachinaInc/mailer
 RUN python3 -m pip install --upgrade git+https://github.com/LexMachinaInc/util.git
 
 # https://github.com/lorenzwalthert/precommit
-RUN python3 -m pip install --upgrade --ignore-installed pre-commit
+RUN python3 -m pip install --upgrade --ignore-installed pre-commit --constraint ${AIRFLOW_CONSTRAINTS}
 
 ###########################################################################
 # Preparing for later installations of Posit Workbench and RStudio Server #
@@ -733,7 +738,7 @@ RUN groupadd -r -g ${AIRFLOW_GID} airflow && \
 ### Must install CNCF provider explicitly (not included in [kubernetes] extra)
 RUN pip install --ignore-installed apache-airflow[kubernetes]==3.1.1 \
       apache-airflow-providers-cncf-kubernetes==10.8.2 \
-      --constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.1.1/constraints-3.12.txt && \
+      --constraint ${AIRFLOW_CONSTRAINTS} && \
     find /usr/local/lib/python3.12/dist-packages -type d -exec chmod 755 {} \; && \
     find /usr/local/lib/python3.12/dist-packages -type f -exec chmod 644 {} \;
 
