@@ -105,12 +105,15 @@ package. A wrong distro, such as `bogusdistro/4.6`, returns the jammy BINARY.
 The Dockerfile builds this URL from `UBUNTU_CODENAME`, its one statement of the
 Ubuntu release, so it follows a release change. Nothing would report a mismatch.
 
-### The Ubuntu release is named in two places
+### Changing the Ubuntu release
 
-`UBUNTU_CODENAME` at the top of the Dockerfile (noble since R 4.6.1), and the
-`__linux__/<codename>/` path of `CRAN_CHECKPOINT_BINARY` in the workflow on
-main. Posit Package Manager serves binaries for whatever release the URL names,
-so the Dockerfile stops the build when the two differ. Change both together.
+The release is set by `UBUNTU_CODENAME` at the top of the Dockerfile (noble since
+R 4.6.1) and by the `__linux__/<codename>/` path of `CRAN_CHECKPOINT_BINARY` in
+the workflow on main. Posit Package Manager serves binaries for whatever release
+the URL names, so the Dockerfile stops the build when the two differ. Change both
+together. Some apt package names (`libicu74`, `libgeos-c1t64`) and the Python
+version (`python3.12` paths, Airflow `constraints-3.12.txt`) are release
+specific too and need a look on the next move.
 
 **`install.packages()` fails open.** It reports a missing package or an
 unreachable repository as a warning, so R exits 0 and the Docker layer goes
