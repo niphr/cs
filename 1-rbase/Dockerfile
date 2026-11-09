@@ -1,5 +1,11 @@
-FROM docker.io/ubuntu:jammy
+# The one place the Ubuntu release is named. The R .deb, the Microsoft repo, the
+# r-universe and the plnr snapshot all follow it. CRAN_CHECKPOINT_BINARY comes
+# from the workflow on main and names the release in its path; the check below
+# stops the build when it names another one.
+ARG UBUNTU_CODENAME=noble
+FROM docker.io/ubuntu:${UBUNTU_CODENAME}
 
+ARG UBUNTU_CODENAME
 ARG R_VERSION=4.6.1
 ARG CRAN_CHECKPOINT_BINARY=https://packagemanager.rstudio.com/all/766976
 ARG CRAN_CHECKPOINT_SOURCE=https://packagemanager.rstudio.com/all/766976
@@ -18,8 +24,19 @@ LABEL org.opencontainers.image.licenses=MIT
 ENV R_HOME="/opt/R/${R_VERSION}/lib/R"
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Posit Package Manager serves a binary for whatever release the URL names, and
+# R installs it without complaint. A jammy URL on noble ships jammy binaries.
+RUN case "$CRAN_CHECKPOINT_BINARY" in \
+      */__linux__/${UBUNTU_CODENAME}/*) ;; \
+      *) echo "CRAN_CHECKPOINT_BINARY=$CRAN_CHECKPOINT_BINARY does not name __linux__/${UBUNTU_CODENAME}" >&2; exit 1 ;; \
+    esac
+
 # Make apt resilient to transient network failures
 RUN echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries
+
+# Since noble the base image has a user 'ubuntu' with uid 1000. Images built on
+# this one create their own uid-1000 user (ruser in the SSH workspace).
+RUN if id ubuntu >/dev/null 2>&1; then userdel -r ubuntu; fi
 
 ########################
 # Locale configuration #
@@ -70,15 +87,15 @@ RUN apt-get update -y && \
     libclang-dev \
     libcurl4-openssl-dev \
     libfribidi-dev \
-    libgeos-c1v5 \
+    libgeos-c1t64 \
     libgdal-dev \
     libgfortran-11-dev \
     libgit2-dev \
     libglpk-dev \
     libglu1-mesa-dev \
-    libgsl0-dev \
+    libgsl-dev \
     libharfbuzz-dev \
-    libicu70 \
+    libicu74 \
     libjq-dev \
     libmagick++-dev \
     libnetcdf-dev \
@@ -92,7 +109,6 @@ RUN apt-get update -y && \
     libprotobuf-dev \
     libsodium-dev \
     libssl-dev \
-    libv8-dev \
     libudunits2-dev \
     mesa-common-dev \
     ncftp \
@@ -161,8 +177,9 @@ RUN apt-get update -y && \
     postgresql
     
 # MSSQL drivers
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-  && curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+  && . /etc/os-release \
+  && curl -fsSL https://packages.microsoft.com/config/ubuntu/${VERSION_ID}/prod.list > /etc/apt/sources.list.d/mssql-release.list \
   && apt-get update \
   && ACCEPT_EULA=Y apt-get install --yes --no-install-recommends msodbcsql17
 
@@ -182,7 +199,8 @@ RUN echo export PATH >> /etc/profile
 #####
 
 # Install R
-RUN wget --tries=5 --retry-connrefused --waitretry=10 https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb && \
+RUN . /etc/os-release && \
+    wget --tries=5 --retry-connrefused --waitretry=10 https://cdn.rstudio.com/r/ubuntu-$(echo $VERSION_ID | tr -d .)/pkgs/r-${R_VERSION}_1_amd64.deb && \
     apt-get update -qq && \
     DEBIAN_FRONTEND=noninteractive apt-get install -f -y ./r-${R_VERSION}_1_amd64.deb && \
     ln -s /opt/R/${R_VERSION}/bin/R /usr/bin/R && \
@@ -590,7 +608,7 @@ RUN R -e "install.packages('rstanarm')"
 # universe offers. That fails the build on an outage, on a partial install, and
 # on a silent downgrade to the older CRAN checkpoint copy.
 RUN R -e "pkgs <- c('csalert','csdata','csdb','csmaps','csstyle','cstidy','cstime','csutil','cs9','cs9example'); \
-    uni <- sprintf('https://niphr.r-universe.dev/bin/linux/jammy/%s', getRversion()[,1:2]); \
+    uni <- sprintf('https://niphr.r-universe.dev/bin/linux/${UBUNTU_CODENAME}/%s', getRversion()[,1:2]); \
     want <- available.packages(repos = uni)[pkgs, 'Version']; \
     install.packages(pkgs, repos = c(uni, getOption('repos'))); \
     got <- sapply(pkgs, function(p) tryCatch(as.character(packageVersion(p)), error = function(e) NA_character_)); \
@@ -606,7 +624,7 @@ RUN R -e "pkgs <- c('csalert','csdata','csdb','csmaps','csstyle','cstidy','cstim
 # fixes it. A newer checkpoint would change most CRAN packages, so this layer
 # replaces plnr alone.
 #
-# The source is the Posit Package Manager snapshot of 2026-10-01 for jammy. It
+# The source is the Posit Package Manager snapshot of 2026-10-01 for this release. It
 # serves a prebuilt binary for this R version, from the same host as the
 # checkpoint. A dated snapshot keeps the layer reproducible; latest would not.
 # dependencies = FALSE keeps every plnr dependency at its checkpoint version.
@@ -619,7 +637,7 @@ RUN R -e "pkgs <- c('csalert','csdata','csdb','csmaps','csstyle','cstidy','cstim
 # a WARNING, so R exits 0 and the layer goes green with the old plnr. Assert
 # afterwards instead: plnr MUST be 2026.9.23 or newer, it MUST load, and exactly
 # one copy MUST exist across .libPaths(), so no old copy can shadow it.
-RUN R -e "install.packages('plnr', repos = 'https://packagemanager.posit.co/cran/__linux__/jammy/2026-10-01', dependencies = FALSE); \
+RUN R -e "install.packages('plnr', repos = 'https://packagemanager.posit.co/cran/__linux__/${UBUNTU_CODENAME}/2026-10-01', dependencies = FALSE); \
     got <- tryCatch(as.character(packageVersion('plnr')), error = function(e) NA_character_); \
     if (is.na(got) || package_version(got) < '2026.9.23') stop('plnr install failed or too old: want >= 2026.9.23, got ', got); \
     n <- sum(dir.exists(file.path(.libPaths(), 'plnr'))); \
@@ -659,6 +677,13 @@ RUN git clone "https://github.com/niphr/cs9example.git" "/cs9example"
 # Python libraries #
 ####################
 
+# Since noble the system Python refuses pip installs (PEP 668). This image
+# installs into it on purpose, as it did on jammy, at build time and in pods.
+# pip cannot upgrade a package apt installed (no RECORD file), so installs that
+# pull a newer one (packaging, for pre-commit and Airflow) use --ignore-installed;
+# the copy in /usr/local shadows the apt one.
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
 # reticulate, python, and marrow mailer
 RUN echo "RETICULATE_MINICONDA_ENABLED=FALSE" >> $R_HOME/etc/Renviron
 RUN echo "RETICULATE_MINICONDA_PATH='/miniconda'" >> $R_HOME/etc/Renviron
@@ -669,7 +694,7 @@ RUN python3 -m pip install --upgrade git+https://github.com/LexMachinaInc/mailer
 RUN python3 -m pip install --upgrade git+https://github.com/LexMachinaInc/util.git
 
 # https://github.com/lorenzwalthert/precommit
-RUN python3 -m pip install --upgrade pre-commit
+RUN python3 -m pip install --upgrade --ignore-installed pre-commit
 
 ###########################################################################
 # Preparing for later installations of Posit Workbench and RStudio Server #
@@ -706,12 +731,11 @@ RUN groupadd -r -g ${AIRFLOW_GID} airflow && \
 ### install Airflow for Kubernetes execution (for Airflow 3.0+ compatibility)
 ### Use official Airflow 3.1.1 constraints for known-good dependency versions
 ### Must install CNCF provider explicitly (not included in [kubernetes] extra)
-RUN pip install --upgrade pip && \
-    pip install apache-airflow[kubernetes]==3.1.1 \
+RUN pip install --ignore-installed apache-airflow[kubernetes]==3.1.1 \
       apache-airflow-providers-cncf-kubernetes==10.8.2 \
-      --constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.1.1/constraints-3.10.txt && \
-    find /usr/local/lib/python3.10/dist-packages -type d -exec chmod 755 {} \; && \
-    find /usr/local/lib/python3.10/dist-packages -type f -exec chmod 644 {} \;
+      --constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.1.1/constraints-3.12.txt && \
+    find /usr/local/lib/python3.12/dist-packages -type d -exec chmod 755 {} \; && \
+    find /usr/local/lib/python3.12/dist-packages -type f -exec chmod 644 {} \;
 
 ### Set AIRFLOW_HOME to /tmp/airflow for ephemeral worker pods
 ### This allows any UID to import airflow without permission issues
