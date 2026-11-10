@@ -102,8 +102,18 @@ ten packages. You cannot detect a wrong URL by its status code.
 **The R version segment IS honoured. The distro segment is IGNORED.** A wrong R
 version, such as `jammy/9.9`, degrades to source and still installs the correct
 package. A wrong distro, such as `bogusdistro/4.6`, returns the jammy BINARY.
-So a future move to noble MUST change this URL by hand. Nothing will report the
-mismatch, and the image will carry jammy binaries built against jammy ABI.
+The Dockerfile builds this URL from `UBUNTU_CODENAME`, its one statement of the
+Ubuntu release, so it follows a release change. Nothing would report a mismatch.
+
+### Changing the Ubuntu release
+
+The release is set by `UBUNTU_CODENAME` at the top of the Dockerfile (noble since
+R 4.6.1) and by the `__linux__/<codename>/` path of `CRAN_CHECKPOINT_BINARY` in
+the workflow on main. Posit Package Manager serves binaries for whatever release
+the URL names, so the Dockerfile stops the build when the two differ. Change both
+together. Some apt package names (`libicu74`, `libgeos-c1t64`) and the Python
+version (`python3.12` paths, Airflow `constraints-3.12.txt`) are release
+specific too and need a look on the next move.
 
 **`install.packages()` fails open.** It reports a missing package or an
 unreachable repository as a warning, so R exits 0 and the Docker layer goes
